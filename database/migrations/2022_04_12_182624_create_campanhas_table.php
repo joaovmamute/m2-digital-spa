@@ -17,7 +17,6 @@ return new class extends Migration
             $table->id();
 
             $table->string('nome');
-            $table->text('description');
             $table->decimal('desconto', 5, 4);
             $table->boolean('ativa')->default(false);
 
