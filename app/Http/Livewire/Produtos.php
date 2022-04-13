@@ -5,12 +5,18 @@ namespace App\Http\Livewire;
 use App\Models\Campanha;
 use App\Models\Produto;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Produtos extends Component
 {
+    use WithPagination;
+
     public $modal = false;
+    public $deleteModal = false;
+    public $campanhasModal = false;
     public $produto_id = null;
     public $nome, $preco;
+    public $search = '';
 
     protected $rules = [
         'nome' => 'required|unique:cidades|max:255',
@@ -25,14 +31,29 @@ class Produtos extends Component
         'preco.min' => 'Preço não pode ser menor que 0.'
     ];
 
+    protected $listeners = ['produtosRender' => 'render'];
+
     public function getProdutosProperty()
     {
-        return Produto::orderBy('id')->get();
+        $produto = Produto::orderBy('id');
+
+        if ($this->search) {
+            $produto->where('nome', 'like', '%' . $this->search . '%');
+        }
+
+        return $produto->paginate(10);
     }
 
     public function getCampanhasProperty()
     {
         return Campanha::orderBy('id')->get();
+    }
+
+    public function callRenders()
+    {
+        $this->emit('cidadesRender');
+        $this->emit('gruposRender');
+        $this->emit('campanhasRender');
     }
 
     public function render()
@@ -83,6 +104,7 @@ class Produtos extends Component
         ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
@@ -105,11 +127,46 @@ class Produtos extends Component
             ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
-    public function delete($id)
+    public function openDeleteModal($id)
     {
-        Produto::destroy($id);
+        $this->produto_id = $id;
+        $this->setInput();
+        $this->deleteModal = true;
+    }
+
+    public function delete()
+    {
+        $produto = Produto::find($this->produto_id);
+
+        if($produto->campanhas->count()) {
+            $produto->campanhas()->detach();
+        }
+
+        $produto->delete();
+        $this->resetInput();
+        $this->callRenders();
+        $this->deleteModal = false;
+    }
+
+    public function openCampanhasModal($id = null)
+    {
+        $this->produto_id = $id;
+
+        $this->campanhasModal = true;
+    }
+
+    public function analisaCampanha($id)
+    {
+        $produto = Produto::find($this->produto_id);
+
+        if($produto->campanhas->find($id)) {
+            $produto->campanhas()->detach($id);
+        } else {
+            $produto->campanhas()->attach($id);
+        }
     }
 }

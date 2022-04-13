@@ -5,12 +5,18 @@ namespace App\Http\Livewire;
 use App\Models\Cidade;
 use App\Models\Grupo;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Cidades extends Component
 {
+    use WithPagination;
+
     public $modal = false;
+    public $deleteModal = false;
     public $cidade_id = null;
     public $nome, $grupo_id;
+    public $filtroGrupo = '';
+    public $search = '';
 
     protected $rules = [
         'nome' => 'required|unique:cidades|max:255'
@@ -21,14 +27,34 @@ class Cidades extends Component
         'nome.unique' => 'Cidade já cadastrada.'
     ];
 
+    protected $listeners = ['cidadesRender' => 'render'];
+
     public function getCidadesProperty()
     {
-        return Cidade::orderBy('id')->get();
+        $cidade = Cidade::orderBy('id');
+
+        if ($this->filtroGrupo) {
+            $cidade->where('grupo_id', $this->filtroGrupo);
+        }
+
+        if ($this->search) {
+            $cidade->where('nome', 'like', '%' . $this->search . '%');
+        }
+
+        return $cidade->paginate(10);
     }
 
     public function getGruposProperty()
     {
-        return Grupo::orderBy('id')->get();
+        return Grupo::orderBy('id')
+            ->get();
+    }
+
+    public function callRenders()
+    {
+        $this->emit('gruposRender');
+        $this->emit('campanhasRender');
+        $this->emit('produtosRender');
     }
 
     public function render()
@@ -79,6 +105,7 @@ class Cidades extends Component
         ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
@@ -101,11 +128,22 @@ class Cidades extends Component
             ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
-    public function delete($id)
+    public function openDeleteModal($id)
     {
-        Cidade::destroy($id);
+        $this->cidade_id = $id;
+        $this->setInput();
+        $this->deleteModal = true;
+    }
+
+    public function delete()
+    {
+        Cidade::destroy($this->cidade_id);
+        $this->resetInput();
+        $this->callRenders();
+        $this->deleteModal = false;
     }
 }

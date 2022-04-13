@@ -3,13 +3,20 @@
 namespace App\Http\Livewire;
 
 use App\Models\Campanha;
+use App\Models\Produto;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Campanhas extends Component
 {
+    use WithPagination;
+
     public $modal = false;
+    public $deleteModal = false;
+    public $produtosModal = false;
     public $campanha_id = null;
     public $nome, $desconto;
+    public $search = '';
 
     protected $rules = [
         'nome' => 'required|unique:cidades|max:255',
@@ -25,9 +32,29 @@ class Campanhas extends Component
         'desconto.max' => 'Desconto não pode ser maior que 100.'
     ];
 
+    protected $listeners = ['campanhasRender' => 'render'];
+
     public function getCampanhasProperty()
     {
-        return Campanha::orderBy('id')->get();
+        $campanha = Campanha::orderBy('id');
+
+        if ($this->search) {
+            $campanha->where('nome', 'like', '%' . $this->search . '%');
+        }
+
+        return $campanha->paginate(10);
+    }
+
+    public function getProdutosProperty()
+    {
+        return Produto::orderBy('id')->get();
+    }
+
+    public function callRenders()
+    {
+        $this->emit('cidadesRender');
+        $this->emit('gruposRender');
+        $this->emit('produtossRender');
     }
 
     public function render()
@@ -37,7 +64,7 @@ class Campanhas extends Component
 
     public function openModal($id = null)
     {
-        if($this->modal) {
+        if ($this->modal) {
             $this->modal = false;
         } else {
             $this->resetValidation();
@@ -78,6 +105,7 @@ class Campanhas extends Component
         ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
@@ -100,19 +128,52 @@ class Campanhas extends Component
             ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
-    public function delete($id)
+    public function openDeleteModal($id)
     {
-        $Campanha = Campanha::find($id);
+        $this->campanha_id = $id;
+        $this->setInput();
+        $this->deleteModal = true;
+    }
 
-        foreach ($Campanha->grupos as $grupo) {
+    public function delete()
+    {
+        $campanha = Campanha::find($this->campanha_id);
+
+        foreach ($campanha->grupos as $grupo) {
             $grupo->Campanha()->dissociate();
 
             $grupo->save();
         }
 
-        Campanha::destroy($id);
+        if ($campanha->produtos->count()) {
+            $campanha->produtos()->detach();
+        }
+
+        $campanha->delete();
+        $this->resetInput();
+        $this->callRenders();
+        $this->deleteModal = false;
+    }
+
+    public function openProdutosModal($id = null)
+    {
+        $this->campanha_id = $id;
+
+        $this->produtosModal = true;
+    }
+
+    public function analisaProduto($id)
+    {
+        $campanha = Campanha::find($this->campanha_id);
+
+        if ($campanha->produtos->find($id)) {
+            $campanha->produtos()->detach($id);
+        } else {
+            $campanha->produtos()->attach($id);
+        }
     }
 }

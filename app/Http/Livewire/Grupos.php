@@ -5,12 +5,18 @@ namespace App\Http\Livewire;
 use App\Models\Campanha;
 use App\Models\Grupo;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Grupos extends Component
 {
+    use WithPagination;
+
     public $modal = false;
+    public $deleteModal = false;
     public $grupo_id = null;
     public $nome, $campanha_id;
+    public $filtroCampanha = '';
+    public $search = '';
 
     protected $rules = [
         'nome' => 'required|unique:cidades|max:255'
@@ -21,14 +27,33 @@ class Grupos extends Component
         'nome.unique' => 'Grupo já cadastrado.'
     ];
 
+    protected $listeners = ['gruposRender' => 'render'];
+
     public function getGruposProperty()
     {
-        return Grupo::orderBy('id')->get();
+        $grupo = Grupo::orderBy('id');
+
+        if ($this->filtroCampanha) {
+            $grupo->where('campanha_id', $this->filtroCampanha);
+        }
+
+        if ($this->search) {
+            $grupo->where('nome', 'like', '%' . $this->search . '%');
+        }
+
+        return $grupo->paginate(10);
     }
 
     public function getCampanhasProperty()
     {
         return Campanha::orderBy('id')->get();
+    }
+
+    public function callRenders()
+    {
+        $this->emit('cidadesRender');
+        $this->emit('campanhasRender');
+        $this->emit('produtosRender');
     }
 
     public function render()
@@ -79,6 +104,7 @@ class Grupos extends Component
         ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
@@ -100,12 +126,20 @@ class Grupos extends Component
             ]);
 
         $this->resetInput();
+        $this->callRenders();
         $this->modal = false;
     }
 
-    public function delete($id)
+    public function openDeleteModal($id)
     {
-        $grupo = Grupo::find($id);
+        $this->grupo_id = $id;
+        $this->setInput();
+        $this->deleteModal = true;
+    }
+
+    public function delete()
+    {
+        $grupo = Grupo::find($this->grupo_id);
 
         foreach ($grupo->cidades as $cidade) {
             $cidade->grupo()->dissociate();
@@ -113,6 +147,9 @@ class Grupos extends Component
             $cidade->save();
         }
 
-        Grupo::destroy($id);
+        $grupo->delete();
+        $this->resetInput();
+        $this->callRenders();
+        $this->deleteModal = false;
     }
 }
