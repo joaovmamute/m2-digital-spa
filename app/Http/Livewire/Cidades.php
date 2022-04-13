@@ -27,8 +27,6 @@ class Cidades extends Component
         'nome.unique' => 'Cidade já cadastrada.'
     ];
 
-    protected $listeners = ['cidadesRender' => 'render'];
-
     public function getCidadesProperty()
     {
         $cidade = Cidade::orderBy('id');
@@ -48,13 +46,6 @@ class Cidades extends Component
     {
         return Grupo::orderBy('id')
             ->get();
-    }
-
-    public function callRenders()
-    {
-        $this->emit('gruposRender');
-        $this->emit('campanhasRender');
-        $this->emit('produtosRender');
     }
 
     public function render()
@@ -105,7 +96,6 @@ class Cidades extends Component
         ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -128,7 +118,6 @@ class Cidades extends Component
             ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -143,7 +132,6 @@ class Cidades extends Component
     {
         Cidade::destroy($this->cidade_id);
         $this->resetInput();
-        $this->callRenders();
         $this->deleteModal = false;
     }
 }

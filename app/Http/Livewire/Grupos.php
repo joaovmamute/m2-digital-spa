@@ -27,8 +27,6 @@ class Grupos extends Component
         'nome.unique' => 'Grupo já cadastrado.'
     ];
 
-    protected $listeners = ['gruposRender' => 'render'];
-
     public function getGruposProperty()
     {
         $grupo = Grupo::orderBy('id');
@@ -47,13 +45,6 @@ class Grupos extends Component
     public function getCampanhasProperty()
     {
         return Campanha::orderBy('id')->get();
-    }
-
-    public function callRenders()
-    {
-        $this->emit('cidadesRender');
-        $this->emit('campanhasRender');
-        $this->emit('produtosRender');
     }
 
     public function render()
@@ -104,7 +95,6 @@ class Grupos extends Component
         ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -126,7 +116,6 @@ class Grupos extends Component
             ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -149,7 +138,6 @@ class Grupos extends Component
 
         $grupo->delete();
         $this->resetInput();
-        $this->callRenders();
         $this->deleteModal = false;
     }
 }

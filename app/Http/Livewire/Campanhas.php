@@ -32,8 +32,6 @@ class Campanhas extends Component
         'desconto.max' => 'Desconto não pode ser maior que 100.'
     ];
 
-    protected $listeners = ['campanhasRender' => 'render'];
-
     public function getCampanhasProperty()
     {
         $campanha = Campanha::orderBy('id');
@@ -48,13 +46,6 @@ class Campanhas extends Component
     public function getProdutosProperty()
     {
         return Produto::orderBy('id')->get();
-    }
-
-    public function callRenders()
-    {
-        $this->emit('cidadesRender');
-        $this->emit('gruposRender');
-        $this->emit('produtossRender');
     }
 
     public function render()
@@ -105,7 +96,6 @@ class Campanhas extends Component
         ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -128,7 +118,6 @@ class Campanhas extends Component
             ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -155,7 +144,6 @@ class Campanhas extends Component
 
         $campanha->delete();
         $this->resetInput();
-        $this->callRenders();
         $this->deleteModal = false;
     }
 

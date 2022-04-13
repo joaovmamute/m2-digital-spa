@@ -31,8 +31,6 @@ class Produtos extends Component
         'preco.min' => 'Preço não pode ser menor que 0.'
     ];
 
-    protected $listeners = ['produtosRender' => 'render'];
-
     public function getProdutosProperty()
     {
         $produto = Produto::orderBy('id');
@@ -47,13 +45,6 @@ class Produtos extends Component
     public function getCampanhasProperty()
     {
         return Campanha::orderBy('id')->get();
-    }
-
-    public function callRenders()
-    {
-        $this->emit('cidadesRender');
-        $this->emit('gruposRender');
-        $this->emit('campanhasRender');
     }
 
     public function render()
@@ -104,7 +95,6 @@ class Produtos extends Component
         ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -127,7 +117,6 @@ class Produtos extends Component
             ]);
 
         $this->resetInput();
-        $this->callRenders();
         $this->modal = false;
     }
 
@@ -148,7 +137,6 @@ class Produtos extends Component
 
         $produto->delete();
         $this->resetInput();
-        $this->callRenders();
         $this->deleteModal = false;
     }
 
